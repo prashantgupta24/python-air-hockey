@@ -9,12 +9,18 @@ class App:
         pyxel.init(256, 256)
         self.border = 15
 
-        self.isGameActive = True
-
+        self.initValues()
         #paddle dimensions
         self.pLength = 20
         self.pMovingDistance = 5 #pixels to move paddle on key press
 
+        pyxel.run(self.update, self.draw)
+
+    #def distanceOfBallFromPoint()
+
+    def initValues(self):
+
+        self.isGameActive = True
         #paddle co-ordinates
         self.p1x = self.border
         self.p1y = pyxel.height / 2
@@ -28,13 +34,11 @@ class App:
         self.cr = 5
 
         #ball moving parameters
-        self.vx = -1
-        self.vy = -2
+        # self.vx = randint(-2,-1)
+        # self.vy = randint(-2,-1)
+        self.vx = 1
+        self.vy = 2
 
-        pyxel.run(self.update, self.draw)
-
-    #def distanceOfBallFromPoint()
-    
     def checkBallCollision(self):
 
         hasBallCollided = False
@@ -51,27 +55,36 @@ class App:
             self.vy = self.vy * -1
             print("collided top/bottom!")
 
-        #hitting either paddles
-        # if self.p1x >= leftPointX and self.p1x < self.cx:
-        #     if self.p1y > bottomPointY or
-        #
-        # if self.cx < self.p1x or rightPointX > self.p2x:
-        #     hasBallCollided = True
-        #     self.vx = self.vx * -1
-        #     print("collided left/right!")
-
         #entering the realm of p1
-        if leftPointX <= self.p1x < self.cx:
+        if leftPointX <= self.p1x and self.vx < 0:
             if bottomPointY < self.p1y or topPointY > self.p1y + self.pLength:
-                print("missed!")
-                self.isGameActive = False
+                pass
             else:
+                #determine angle of hit
                 print("collided with left paddle!")
                 self.vx = self.vx * -1
+
+        #entering the realm of p2
+        if rightPointX >= self.p2x and self.vx > 0:
+            if bottomPointY < self.p2y or topPointY > self.p2y + self.pLength:
+                pass
+            else:
+                #determine angle of hit
+                print("collided with right paddle!")
+                self.vx = self.vx * -1
+
+        #missed both
+        if self.p2x < self.cx < self.p1x:
+            print("missed!")
+            self.isGameActive = False
+
 
     def update(self):
         if pyxel.btnp(pyxel.KEY_Q):
             pyxel.quit()
+
+        if pyxel.btnp(pyxel.KEY_H):
+            self.initValues()
 
         if self.isGameActive:
             if pyxel.btn(pyxel.KEY_W):
