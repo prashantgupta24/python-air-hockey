@@ -6,20 +6,24 @@ class App:
     def __init__(self):
         print("Starting game...")
         pyxel.init(256, 256)
-        self.border = 15
-
         self.initValues()
-        #paddle dimensions
-        self.pLength = 20
-        self.pMovingDistance = 5 #pixels to move paddle on key press
-
         pyxel.run(self.update, self.draw)
-
-    #def distanceOfBallFromPoint()
 
     def initValues(self):
 
+        #screen setup
+        self.border = 15
+
+        #paddle attributes
+        self.pLength = 30
+        self.pMovingDistance = 8 #pixels to move paddle on key press
+
+        #game attributes
         self.isGameActive = True
+        self.hitCount = 0
+        self.increaseSpeedAfter = 3
+        self.increaseSpeedFactor = 1.2
+
         #paddle co-ordinates
         self.p1x = self.border
         self.p1y = pyxel.height / 2
@@ -30,7 +34,7 @@ class App:
         #ball attributes
         self.cx = pyxel.width / 2
         self.cy = pyxel.height / 2
-        self.cr = 5
+        self.cr = 8
 
         #ball moving parameters
         # self.vx = randint(-2,-1)
@@ -44,21 +48,9 @@ class App:
 
         return False
 
-    def checkBallCollision(self):
+    def handlePaddle1(self, leftPointX, topPointY, bottomPointY):
 
         hasBallCollided = False
-
-        topPointY = self.cy - self.cr
-        bottomPointY = self.cy + self.cr
-
-        leftPointX = self.cx - self.cr
-        rightPointX = self.cx + self.cr
-
-        #top or down
-        if topPointY < self.border or bottomPointY > pyxel.height - self.border:
-            hasBallCollided = True
-            self.vy = self.vy * -1
-            #print("collided top/bottom!")
 
         #entering the realm of p1
         if leftPointX <= self.p1x and self.vx < 0:
@@ -66,16 +58,15 @@ class App:
                 pass
             else:
                 print("collided with left paddle!")
+                hasBallCollided = True
                 print(f'x is {self.cx} and y is {self.cy}')
-                #determine angle of hit
+                #determine angle of hit if not proper hit
                 if not self.properHit(self.p1y):
                     if self.vy > 0:
                         print("ball coming from top!")
                         # hitting top edge
                         if self.cy < self.p1y:
                             print("hit top edge of paddle 1!")
-                            #print(f'vs is {self.vx} and vy is {self.vy}')
-                            #self.vx, self.vy = self.vy, self.vx
                             self.vx = self.vx * -1
                             self.vy = self.vy * -1
                             self.vx = self.vx - 0.1
@@ -98,6 +89,13 @@ class App:
                     print("proper hit!")
                     self.vx = self.vx * -1
 
+        return hasBallCollided
+
+
+    def handlePaddle2(self, rightPointX, topPointY, bottomPointY):
+
+        hasBallCollided = False
+
         #entering the realm of p2
         if rightPointX >= self.p2x and self.vx > 0:
             # if bottomPointY < self.p2y or topPointY > self.p2y + self.pLength:
@@ -107,19 +105,47 @@ class App:
             #     self.vx = randint(1,3)
             #     self.vy = randint(1,3)
             print("collided with right paddle!")
+            hasBallCollided = True
+            #print(f'hit count is {self.hitCount}')
+
             self.vx = self.vx * -1
+
+        return hasBallCollided
+
+
+    def checkBallCollision(self):
+
+        topPointY = self.cy - self.cr
+        bottomPointY = self.cy + self.cr
+
+        leftPointX = self.cx - self.cr
+        rightPointX = self.cx + self.cr
+
+        #top or down
+        if topPointY < self.border or bottomPointY > pyxel.height - self.border:
+            self.vy = self.vy * -1
+            #print("collided top/bottom!")
+
+        ballHitP1 = self.handlePaddle1(leftPointX=leftPointX, topPointY=topPointY, bottomPointY=bottomPointY)
+        ballHitP2 = self.handlePaddle2(rightPointX=rightPointX, topPointY=topPointY, bottomPointY=bottomPointY)
+
+        if ballHitP1 or ballHitP2:
+            self.hitCount += 1
+            if self.hitCount > 1 and self.hitCount % self.increaseSpeedAfter == 0:
+                print(f'Increasing speed after {self.hitCount} hits')
+                self.vx = self.vx * self.increaseSpeedFactor
+                self.vy = self.vy * self.increaseSpeedFactor
 
         #missed both
         if self.cx > self.p2x or self.cx < self.p1x:
             print("missed!")
             self.isGameActive = False
 
-
     def update(self):
         if pyxel.btnp(pyxel.KEY_Q):
             pyxel.quit()
 
-        if pyxel.btnp(pyxel.KEY_H):
+        if pyxel.btnp(pyxel.KEY_R):
             self.initValues()
 
         if self.isGameActive:
@@ -145,6 +171,7 @@ class App:
             self.cy = self.cy + self.vy
 
             #print(f'x is {self.cx} and y is {self.cy}')
+
 
     def draw(self):
 
