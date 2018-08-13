@@ -1,25 +1,30 @@
-from random import randint
+import random
 
 import pyxel
 
 class App:
     def __init__(self):
         print("Starting game...")
-        pyxel.init(256, 256)
+        pyxel.init(256, 256, caption="Air hockey", scale=8, fps=22)
         self.initValues()
+        #Scores are per game, not per round
+        self.p1Score = 0
+        self.p2Score = 0
         pyxel.run(self.update, self.draw)
 
     def initValues(self):
 
         #screen setup
-        self.border = 15
+        self.border = 20 #anything less than 20 doesn't work
 
         #paddle attributes
         self.pLength = 30
         self.pMovingDistance = 8 #pixels to move paddle on key press
 
         #game attributes
-        self.isGameActive = True
+        self.endGameScore = 2
+        self.hasGameEnded = False
+        self.isRoundActive = True
         self.hitCount = 0
         self.increaseSpeedAfter = 3
         self.increaseSpeedFactor = 1.2
@@ -34,13 +39,13 @@ class App:
         #ball attributes
         self.cx = pyxel.width / 2
         self.cy = pyxel.height / 2
-        self.cr = 8
+        self.cr = 7
 
         #ball moving parameters
-        # self.vx = randint(-2,-1)
-        # self.vy = randint(-2,-1)
-        self.vx = -2.5
-        self.vy = -3
+        self.vx = random.uniform(-1.5,-3)
+        self.vy = random.uniform(-1.5,-3)
+        # self.vx = -2.5
+        # self.vy = -3
 
     def properHit(self, paddleY):
         if paddleY <= self.cy <= paddleY + self.pLength :
@@ -66,25 +71,26 @@ class App:
                         print("ball coming from top!")
                         # hitting top edge
                         if self.cy < self.p1y:
-                            print("hit top edge of paddle 1!")
+                            print("hit top edge of paddle 1 with difference : ", self.p1y - self.cy)
                             self.vx = self.vx * -1
                             self.vy = self.vy * -1
-                            self.vx = self.vx - 0.1
+                            self.vx = self.vx - (self.p1y-self.cy)/10
                         else:
                             print("hit bottom edge of paddle 1!")
                             self.vx = self.vx * -1
+                            self.vx = self.vx - (self.cy-self.p1y)/10
                     else:
                         print("ball coming from bottom")
                         # hitting top edge
                         if self.cy < self.p1y:
                             print("hit top edge of paddle 1!")
                             self.vx = self.vx * -1
-                            self.vx = self.vx - 0.1
+                            self.vx = self.vx - (self.p1y-self.cy)/10
                         else:
                             print("hit bottom edge of paddle 1!")
                             self.vx = self.vx * -1
                             self.vy = self.vy * -1
-                            self.vx = self.vx - 0.1
+                            self.vx = self.vx - (self.cy-self.p1y)/10
                 else:
                     print("proper hit!")
                     self.vx = self.vx * -1
@@ -113,6 +119,10 @@ class App:
         return hasBallCollided
 
 
+    def checkGameEndScore(self):
+        if self.p1Score == self.endGameScore or self.p2Score == self.endGameScore:
+            self.hasGameEnded = True
+
     def checkBallCollision(self):
 
         topPointY = self.cy - self.cr
@@ -122,7 +132,7 @@ class App:
         rightPointX = self.cx + self.cr
 
         #top or down
-        if topPointY < self.border or bottomPointY > pyxel.height - self.border:
+        if topPointY < 1 or bottomPointY > pyxel.height - 1:
             self.vy = self.vy * -1
             #print("collided top/bottom!")
 
@@ -137,35 +147,50 @@ class App:
                 self.vy = self.vy * self.increaseSpeedFactor
 
         #missed both
-        if self.cx > self.p2x or self.cx < self.p1x:
-            print("missed!")
-            self.isGameActive = False
+        if self.cx > self.p2x:
+            print("missed by p2!")
+            self.p1Score += 1
+            self.isRoundActive = False
+        elif self.cx < self.p1x:
+            print("missed by p1!")
+            self.p2Score += 1
+            self.isRoundActive = False
+
+
+    def updateControlKeys(self):
+        if pyxel.btn(pyxel.KEY_W):
+            if self.p1y > 1:
+                self.p1y = (self.p1y - self.pMovingDistance)
+
+        if pyxel.btn(pyxel.KEY_S):
+            if self.p1y + self.pLength + self.pMovingDistance < pyxel.height-1:
+                self.p1y = (self.p1y + self.pMovingDistance)
+
+        if pyxel.btn(pyxel.KEY_UP):
+            if self.p2y > 1:
+                self.p2y = (self.p2y - self.pMovingDistance)
+
+        if pyxel.btn(pyxel.KEY_DOWN):
+            if self.p2y + + self.pLength + self.pMovingDistance < pyxel.height-1:
+                self.p2y = (self.p2y + self.pMovingDistance)
 
     def update(self):
         if pyxel.btnp(pyxel.KEY_Q):
             pyxel.quit()
 
-        if pyxel.btnp(pyxel.KEY_R):
-            self.initValues()
+        if not self.isRoundActive:
+            if pyxel.btnp(pyxel.KEY_R):
+                if self.hasGameEnded:
+                    self.p1Score = 0
+                    self.p2Score = 0
+                self.initValues()
 
-        if self.isGameActive:
-            if pyxel.btn(pyxel.KEY_W):
-                if self.p1y > self.border:
-                    self.p1y = (self.p1y - self.pMovingDistance)
 
-            if pyxel.btn(pyxel.KEY_S):
-                if self.p1y + self.pLength + self.pMovingDistance < pyxel.height-self.border:
-                    self.p1y = (self.p1y + self.pMovingDistance)
-
-            if pyxel.btn(pyxel.KEY_UP):
-                if self.p2y > self.border:
-                    self.p2y = (self.p2y - self.pMovingDistance)
-
-            if pyxel.btn(pyxel.KEY_DOWN):
-                if self.p2y + + self.pLength + self.pMovingDistance < pyxel.height-self.border:
-                    self.p2y = (self.p2y + self.pMovingDistance)
+        if self.isRoundActive:
+            self.updateControlKeys()
 
             self.checkBallCollision()
+            self.checkGameEndScore()
 
             self.cx = self.cx + self.vx
             self.cy = self.cy + self.vy
@@ -175,18 +200,35 @@ class App:
 
     def draw(self):
 
-        if self.isGameActive:
+        pyxel.cls(0)
 
-            pyxel.cls(0)
+        pyxel.line(pyxel.width/2, 1, pyxel.width/2, pyxel.height, 1)
+        # draw score
+        s = f'SCORE {self.p1Score}'
+        pyxel.text(self.border, 4, s, 1)
+        pyxel.text(self.border, 4, s, 7)
 
+        s = f'SCORE {self.p2Score}'
+        pyxel.text(pyxel.width - self.border*2, 4, s, 1)
+        pyxel.text(pyxel.width - self.border*2, 4, s, 7)
+
+        if self.isRoundActive:
             pyxel.line(self.p1x, self.p1y, self.p1x, self.p1y + self.pLength, 7)
             pyxel.line(self.p2x, self.p2y, self.p2x, self.p2y + self.pLength, 7)
-
             pyxel.circ(self.cx, self.cy, self.cr, 7)
 
         else:
-            pyxel.cls(0)
-
             pyxel.line(self.p1x, self.p1y, self.p1x, self.p1y + self.pLength, 7)
             pyxel.line(self.p2x, self.p2y, self.p2x, self.p2y + self.pLength, 7)
+
+        if self.hasGameEnded:
+            s = f'You Won!!!'
+
+            if self.p1Score > self.p2Score:
+                pyxel.text(self.border, 20, s, 1)
+                pyxel.text(self.border, 20, s, 7)
+            else:
+                pyxel.text(pyxel.width - self.border*2, 20, s, 1)
+                pyxel.text(pyxel.width - self.border*2, 20, s, 7)
+
 App()
