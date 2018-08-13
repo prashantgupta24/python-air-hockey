@@ -42,8 +42,8 @@ class App:
         self.cr = 7
 
         #ball moving parameters
-        self.vx = random.uniform(-1.5,-3)
-        self.vy = random.uniform(-1.5,-3)
+        self.vx = random.choice([random.uniform(2, 3), random.uniform(-3, -2)])
+        self.vy = random.choice([random.uniform(2, 3), random.uniform(-3, -2)])
         # self.vx = -2.5
         # self.vy = -3
 
@@ -76,7 +76,7 @@ class App:
                             self.vy = self.vy * -1
                             self.vx = self.vx - (self.p1y-self.cy)/10
                         else:
-                            print("hit bottom edge of paddle 1!")
+                            print("hit bottom edge of paddle 1 with difference : ", self.cy - self.p1y)
                             self.vx = self.vx * -1
                             self.vx = self.vx - (self.cy-self.p1y)/10
                     else:
@@ -175,11 +175,11 @@ class App:
                 self.p2y = (self.p2y + self.pMovingDistance)
 
     def update(self):
-        if pyxel.btnp(pyxel.KEY_Q):
+        if pyxel.btnp(pyxel.KEY_ESCAPE):
             pyxel.quit()
 
         if not self.isRoundActive:
-            if pyxel.btnp(pyxel.KEY_R):
+            if pyxel.btnp(pyxel.KEY_ENTER):
                 if self.hasGameEnded:
                     self.p1Score = 0
                     self.p2Score = 0
@@ -231,4 +231,5 @@ class App:
                 pyxel.text(pyxel.width - self.border*2, 20, s, 1)
                 pyxel.text(pyxel.width - self.border*2, 20, s, 7)
 
+            pyxel.text(1, pyxel.width - self.border, "GAME OVER. Press Enter to restart", 2)
 App()
