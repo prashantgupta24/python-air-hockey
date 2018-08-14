@@ -10,6 +10,7 @@ class App:
         #Scores are per game, not per round
         self.p1Score = 0
         self.p2Score = 0
+        self.initSound()
         pyxel.run(self.update, self.draw)
 
     def initValues(self):
@@ -22,7 +23,7 @@ class App:
         self.pMovingDistance = 8 #pixels to move paddle on key press
 
         #game attributes
-        self.endGameScore = 2
+        self.endGameScore = 3
         self.hasGameEnded = False
         self.isRoundActive = True
         self.hitCount = 0
@@ -47,6 +48,16 @@ class App:
         # self.vx = -2.5
         # self.vy = -3
 
+    def initSound(self):
+        pyxel.sound(0).set('g1a#1d#2b2', 's', '7654', 's', 1)
+        #pyxel.sound(1).set('c1c1f0f0a0a0g0g0', 'p', '4', 'nf', 120)
+        a = 'g1c2d2e2 e2e2f2f2'
+        b = 'e2e2e2c2 c2c2c2c2'
+        c = 'g2g2g2d2 d2d2d2d2'
+        pyxel.sound(2).set(a + b + a + c, 's', '4', 'nnnn vvnn vvff nvvf', 30)
+        pyxel.sound(1).set('a3d#3a#2f#2d2b1g1d#1', 's', '77654321', 's', 10)
+
+
     def properHit(self, paddleY):
         if paddleY <= self.cy <= paddleY + self.pLength :
             return True
@@ -63,6 +74,7 @@ class App:
                 pass
             else:
                 print("collided with left paddle!")
+                pyxel.play(ch=0, snd=0)
                 hasBallCollided = True
                 print(f'x is {self.cx} and y is {self.cy}')
                 #determine angle of hit if not proper hit
@@ -97,31 +109,55 @@ class App:
 
         return hasBallCollided
 
-
     def handlePaddle2(self, rightPointX, topPointY, bottomPointY):
 
         hasBallCollided = False
 
         #entering the realm of p2
         if rightPointX >= self.p2x and self.vx > 0:
-            # if bottomPointY < self.p2y or topPointY > self.p2y + self.pLength:
-            #     pass
-            # else:
-            #     #determine angle of hit
-            #     self.vx = randint(1,3)
-            #     self.vy = randint(1,3)
-            print("collided with right paddle!")
-            hasBallCollided = True
-            #print(f'hit count is {self.hitCount}')
-
-            self.vx = self.vx * -1
+            if bottomPointY < self.p2y or topPointY > self.p2y + self.pLength:
+                pass
+            else:
+                print("collided with right paddle!")
+                pyxel.play(ch=0, snd=0)
+                hasBallCollided = True
+                print(f'x is {self.cx} and y is {self.cy}')
+                #determine angle of hit if not proper hit
+                if not self.properHit(self.p2y):
+                    if self.vy > 0:
+                        print("ball coming from top!")
+                        # hitting top edge
+                        if self.cy < self.p2y:
+                            print("hit top edge of paddle 2 with difference : ", self.p2y - self.cy)
+                            self.vx = self.vx * -1
+                            self.vy = self.vy * -1
+                            self.vx = self.vx - (self.p2y-self.cy)/10
+                        else:
+                            print("hit bottom edge of paddle 2 with difference : ", self.cy - self.p2y)
+                            self.vx = self.vx * -1
+                            self.vx = self.vx - (self.cy-self.p2y)/10
+                    else:
+                        print("ball coming from bottom")
+                        # hitting top edge
+                        if self.cy < self.p2y:
+                            print("hit top edge of paddle 2!")
+                            self.vx = self.vx * -1
+                            self.vx = self.vx - (self.p2y-self.cy)/10
+                        else:
+                            print("hit bottom edge of paddle 2!")
+                            self.vx = self.vx * -1
+                            self.vy = self.vy * -1
+                            self.vx = self.vx - (self.cy-self.p2y)/10
+                else:
+                    print("proper hit!")
+                    self.vx = self.vx * -1
 
         return hasBallCollided
-
 
     def checkGameEndScore(self):
         if self.p1Score == self.endGameScore or self.p2Score == self.endGameScore:
             self.hasGameEnded = True
+            pyxel.play(ch=0, snd=2)
 
     def checkBallCollision(self):
 
@@ -151,10 +187,12 @@ class App:
             print("missed by p2!")
             self.p1Score += 1
             self.isRoundActive = False
+            pyxel.play(ch=0, snd=1)
         elif self.cx < self.p1x:
             print("missed by p1!")
             self.p2Score += 1
             self.isRoundActive = False
+            pyxel.play(ch=0, snd=1)
 
 
     def updateControlKeys(self):
@@ -188,7 +226,6 @@ class App:
 
         if self.isRoundActive:
             self.updateControlKeys()
-
             self.checkBallCollision()
             self.checkGameEndScore()
 
@@ -196,7 +233,6 @@ class App:
             self.cy = self.cy + self.vy
 
             #print(f'x is {self.cx} and y is {self.cy}')
-
 
     def draw(self):
 
@@ -220,6 +256,7 @@ class App:
         else:
             pyxel.line(self.p1x, self.p1y, self.p1x, self.p1y + self.pLength, 7)
             pyxel.line(self.p2x, self.p2y, self.p2x, self.p2y + self.pLength, 7)
+            pyxel.text(1, pyxel.width - self.border, "Press Enter to continue", 2)
 
         if self.hasGameEnded:
             s = f'You Won!!!'
@@ -230,6 +267,4 @@ class App:
             else:
                 pyxel.text(pyxel.width - self.border*2, 20, s, 1)
                 pyxel.text(pyxel.width - self.border*2, 20, s, 7)
-
-            pyxel.text(1, pyxel.width - self.border, "GAME OVER. Press Enter to restart", 2)
 App()
